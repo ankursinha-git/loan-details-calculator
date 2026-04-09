@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Top-up Loan Net Disbursal Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #003381;
+    --primary-dark: #00245c;
+    --primary-light: #eaf0fa;
+    --accent: #9187E7;
+    --accent-light: #f1efff;
+    --teal: #4EA893;
+    --text: #00063D;
+    --text-muted: #5c6378;
+    --text-light: #9ca3af;
+    --border: #e5e7eb;
+    --border-focus: #003381;
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --success: #4EA893;
+    --danger: #E87659;
+    --warning-bg: #fff8e1;
+    --warning-border: #FFD325;
+    --warning-text: #7a5c00;
+    --shadow-sm: 0 1px 2px rgba(0, 6, 61, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 6, 61, 0.08);
+    --shadow-lg: 0 12px 32px rgba(0, 6, 61, 0.1);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #003381, #9187E7);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(0, 51, 129, 0.28);
+  }
+  .brand-text h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .brand-text p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+  .badge {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 960px) {
+    .grid { grid-template-columns: 1fr; }
+    .badge { display: none; }
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .card + .card { margin-top: 16px; }
+
+  .card-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-header .num {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-header h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .card-body { padding: 22px; }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 20px;
+  }
+  @media (max-width: 560px) {
+    .field-grid { grid-template-columns: 1fr; }
+  }
+
+  .field label {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 7px;
+    letter-spacing: 0.005em;
+  }
+  .field label .hint {
+    font-weight: 400;
+    color: var(--text-light);
+    margin-left: 4px;
+  }
+
+  .info-tip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #6b7280;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 6px;
+    cursor: help;
+    font-style: italic;
+    font-family: Georgia, serif;
+  }
+  .info-tip:hover { background: var(--primary); color: #fff; }
+  .info-tip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a2e;
+    color: #fff;
+    padding: 7px 11px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    font-style: normal;
+    font-family: 'Inter', sans-serif;
+    text-transform: none;
+    letter-spacing: normal;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  .info-tip:hover::after { opacity: 1; }
+
+  .input-wrap { position: relative; }
+  .input-prefix {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+    font-size: 14px;
+    font-weight: 500;
+    pointer-events: none;
+  }
+  .input-suffix {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+    font-size: 13px;
+    font-weight: 500;
+    pointer-events: none;
+  }
+
+  input[type="number"],
+  input[type="text"],
+  select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    background: #fff;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .has-prefix input { padding-left: 28px; }
+  .has-suffix input, .has-suffix select { padding-right: 28px; }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(0, 51, 129, 0.12);
+  }
+  input[readonly] {
+    background: #f9fafb;
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+  input::placeholder { color: #cbd5e1; font-weight: 400; }
+
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 36px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .btn {
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-secondary {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    color: #374151;
+    flex: 1;
+  }
+  .btn-secondary:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  .summary-wrap { position: sticky; top: 88px; }
+  .summary-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .summary-hero {
+    background: linear-gradient(135deg, #eaf0fa 0%, #f1efff 100%);
+    padding: 24px 22px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-hero .label {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .summary-hero .amount {
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    transition: color 0.2s;
+  }
+  .summary-hero .amount.negative { color: var(--danger); }
+  .summary-hero .sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+  .hero-divider {
+    height: 1px;
+    background: rgba(0, 51, 129, 0.12);
+    margin: 16px 0 14px;
+  }
+  .emi-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .emi-row .label {
+    margin-bottom: 2px;
+  }
+  .emi-row .emi-amount {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+  .emi-row .emi-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .emi-row .emi-right {
+    text-align: right;
+  }
+
+  .warning-bar {
+    display: none;
+    background: var(--warning-bg);
+    border-top: 1px solid var(--warning-border);
+    border-bottom: 1px solid var(--warning-border);
+    padding: 10px 22px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--warning-text);
+  }
+  .warning-bar.show { display: block; }
+
+  .breakdown { padding: 18px 22px; }
+  .breakdown h3 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+  }
+  .line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 13px;
+  }
+  .line + .line { border-top: 1px dashed #f3f4f6; }
+  .line .name { color: var(--text-muted); }
+  .line .val { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  .line.negative .val { color: var(--danger); }
+  .line.subtotal {
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1.5px solid var(--border) !important;
+  }
+  .line.subtotal .name {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .line.subtotal .val {
+    color: var(--danger);
+    font-weight: 800;
+    font-size: 14px;
+  }
+
+  .actions {
+    padding: 16px 22px 22px;
+    border-top: 1px solid var(--border);
+  }
+  .actions-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .action-btn {
+    padding: 11px 8px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+  }
+  .action-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 51, 129, 0.14);
+  }
+  .action-btn svg { width: 18px; height: 18px; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--success);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+  }
+
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 48px;
+  }
+  /* ===== Responsive QA fixes ===== */
+
+  /* Disable sticky on mobile/tablet (when summary stacks below inputs) */
+  @media (max-width: 960px) {
+    .summary-wrap { position: static; top: auto; }
+    .summary-wrap { margin-top: 24px; }
+    .topbar { position: static; }
+  }
+
+  /* Tablet & smaller — tighten spacing */
+  @media (max-width: 768px) {
+    .container { padding: 20px 16px 48px; }
+    .topbar-inner { padding: 0 16px; }
+    .card-body { padding: 18px; }
+    .card-header { padding: 16px 18px; }
+    .field-grid { gap: 16px 16px; }
+    .summary-hero { padding: 22px 18px 20px; }
+    .breakdown { padding: 16px 18px; }
+    .actions { padding: 14px 18px 20px; }
+    .summary-hero .amount { font-size: 30px; }
+    .emi-row .emi-amount { font-size: 18px; }
+
+    /* Prevent iOS Safari auto-zoom on input focus */
+    input[type="number"],
+    input[type="text"],
+    select,
+    .amount-input { font-size: 16px; }
+  }
+
+  /* Small phones (iPhone SE etc.) */
+  @media (max-width: 420px) {
+    .brand-text h1 { font-size: 14px; }
+    .brand-text p { font-size: 11px; }
+    .brand-logo { width: 36px; height: 36px; font-size: 18px; }
+    .summary-hero .amount {
+      font-size: 26px;
+      word-break: break-all;
+      overflow-wrap: anywhere;
+    }
+    .emi-row { gap: 8px; }
+    .emi-row .emi-amount { font-size: 17px; }
+    .line { font-size: 12px; }
+    .container { padding: 16px 12px 40px; }
+    .topbar-inner { padding: 0 12px; }
+    .card-body { padding: 16px; }
+    .card-header { padding: 14px 16px; }
+    .summary-hero { padding: 18px 16px 16px; }
+    .breakdown { padding: 14px 16px; }
+    .actions { padding: 12px 16px 18px; }
+  }
+
+  /* Universal safety: prevent any horizontal scroll */
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .summary-hero .amount,
+  .emi-row .emi-amount,
+  .line .val { overflow-wrap: anywhere; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-logo">₹</div>
+      <div class="brand-text">
+        <h1>Top-up Loan Disbursal Calculator</h1>
+        <p>Net disbursal amount, calculated in real time</p>
+      </div>
+    </div>
+    <div class="badge">INTERNAL · SALES</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="grid">
+
+    <div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="num">1</span>
+          <h2>Loan Details</h2>
+        </div>
+        <div class="card-body">
+          <div class="field-grid">
+            <div class="field">
+              <label>Sanctioned Loan Amount</label>
+              <div class="input-wrap has-prefix">
+                <span class="input-prefix">₹</span>
+                <input type="text" inputmode="numeric" id="loanAmount" class="amount-input" placeholder="e.g. 3,45,000" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Outstanding Loan Amount</label>
+              <div class="input-wrap has-prefix">
+                <span class="input-prefix">₹</span>
+                <input type="text" inputmode="numeric" id="outstandingAmount" class="amount-input" placeholder="e.g. 1,20,000" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Tenure <span class="hint">(months)</span></label>
+              <div class="input-wrap">
+                <input type="number" id="tenure" placeholder="e.g. 36" />
+              </div>
+            </div>
+            <div class="field">
+              <label>IRR / RACC ROI</label>
+              <div class="input-wrap has-suffix">
+                <input type="number" step="0.01" id="irr" placeholder="e.g. 16.5" />
+                <span class="input-suffix">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="num">2</span>
+          <h2>Charges</h2>
+        </div>
+        <div class="card-body">
+          <div class="field-grid">
+            <div class="field">
+              <label>Processing Fee <span class="hint">(excl. GST)</span></label>
+              <div class="input-wrap">
+                <select id="pfPercent">
+                  <option value="">Select slab</option>
+                  <option value="1">1%</option>
+                  <option value="1.5">1.5%</option>
+                  <option value="2">2%</option>
+                  <option value="2.5">2.5%</option>
+                  <option value="3">3%</option>
+                  <option value="3.5">3.5%</option>
+                  <option value="4">4%</option>
+                  <option value="4.5">4.5%</option>
+                  <option value="5">5%</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Processing Fee <span class="hint">(incl. 18% GST)</span></label>
+              <div class="input-wrap has-prefix">
+                <span class="input-prefix">₹</span>
+                <input type="text" id="pfInclGst" readonly placeholder="Auto-calculated" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Documentation Charges <span class="hint">(fixed)</span></label>
+              <div class="input-wrap has-prefix">
+                <span class="input-prefix">₹</span>
+                <input type="text" value="589" readonly />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="num">3</span>
+          <h2>Insurance</h2>
+        </div>
+        <div class="card-body">
+          <div class="field-grid">
+            <div class="field">
+              <label>Provider</label>
+              <div class="input-wrap">
+                <select id="insProvider">
+                  <option value="">Select provider</option>
+                  <option value="Acko">Acko</option>
+                  <option value="ICICI Lombard">ICICI Lombard</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>
+                Insurance Premium
+                <span class="info-tip" data-tip="You can get this amount directly from Jarvis">i</span>
+              </label>
+              <div class="input-wrap has-prefix">
+                <span class="input-prefix">₹</span>
+                <input type="text" inputmode="numeric" id="insPremium" class="amount-input" placeholder="e.g. 5,000" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="num">4</span>
+          <h2>VAS · Healthcare Fee</h2>
+        </div>
+        <div class="card-body">
+          <div class="field-grid">
+            <div class="field">
+              <label>Provider</label>
+              <div class="input-wrap">
+                <select id="vasProvider">
+                  <option value="">Select provider</option>
+                  <option value="DocOnline">DocOnline</option>
+                  <option value="Medibuddy">Medibuddy</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Plan</label>
+              <div class="input-wrap">
+                <select id="vasPlan">
+                  <option value="0">Select plan</option>
+                  <option value="4000">Bronze — ₹4,000</option>
+                  <option value="7000">Silver — ₹7,000</option>
+                  <option value="10000">Gold — ₹10,000</option>
+                  <option value="12500">Platinum — ₹12,500</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="resetBtn" class="btn btn-secondary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+          Reset / New Calculation
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="summary-wrap">
+        <div class="summary-card" id="summaryCard">
+          <div class="summary-hero">
+            <div class="label">Net Disbursal Amount</div>
+            <div class="amount" id="s_net">₹0</div>
+            <div class="sub" id="s_sub">Fill in the details to calculate</div>
+            <div class="hero-divider"></div>
+            <div class="emi-row">
+              <div>
+                <div class="label">
+                  Monthly EMI
+                  <span class="info-tip" data-tip="This excludes BPI amount, if any">i</span>
+                </div>
+                <div class="emi-meta" id="emi_meta">Enter loan, tenure & IRR</div>
+              </div>
+              <div class="emi-right">
+                <div class="emi-amount" id="s_emi">₹0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="warning-bar" id="warningBox">
+            ⚠️ Net disbursal is negative. Please review the inputs.
+          </div>
+
+          <div class="breakdown">
+            <h3>Breakdown</h3>
+            <div class="line">
+              <span class="name">Sanctioned Amount</span>
+              <span class="val" id="s_loan">₹0</span>
+            </div>
+            <div class="line negative">
+              <span class="name">− Outstanding Loan</span>
+              <span class="val" id="s_os">−₹0</span>
+            </div>
+            <div class="line negative">
+              <span class="name">− Processing Fee (incl. GST)</span>
+              <span class="val" id="s_pf">−₹0</span>
+            </div>
+            <div class="line negative">
+              <span class="name">− Documentation Charges</span>
+              <span class="val" id="s_doc">−₹0</span>
+            </div>
+            <div class="line negative">
+              <span class="name">− Insurance Premium</span>
+              <span class="val" id="s_ins">−₹0</span>
+            </div>
+            <div class="line negative">
+              <span class="name">− VAS Healthcare</span>
+              <span class="val" id="s_vas">−₹0</span>
+            </div>
+            <div class="line subtotal">
+              <span class="name">Total Deductions</span>
+              <span class="val" id="s_total_ded">−₹0</span>
+            </div>
+          </div>
+
+          <div class="actions">
+            <div class="actions-title">Share Summary</div>
+            <div class="action-grid">
+              <button class="action-btn" id="copyBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+              </button>
+              <button class="action-btn" id="shotBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                Image
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="footer">Internal use only · v1.0</p>
+</div>
+
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toastMsg">Copied to clipboard</span>
+</div>
+
+<script>
+const DOC_CHARGE = 589;
+const GST_RATE = 0.18;
+
+const fmt = n => {
+  const v = Math.round(n);
+  const sign = v < 0 ? '-' : '';
+  return sign + '₹' + Math.abs(v).toLocaleString('en-IN');
+};
+const fmtNeg = n => {
+  const v = Math.round(n);
+  return '−₹' + Math.abs(v).toLocaleString('en-IN');
+};
+
+const $ = id => document.getElementById(id);
+
+// Indian number formatting: 5000000 -> 50,00,000
+function formatIndian(numStr) {
+  if (!numStr) return '';
+  const n = numStr.replace(/,/g, '');
+  if (isNaN(n) || n === '') return '';
+  // Split into integer and decimal parts
+  const parts = n.split('.');
+  let intPart = parts[0];
+  const decPart = parts[1];
+  // Apply Indian comma placement
+  const lastThree = intPart.slice(-3);
+  const rest = intPart.slice(0, -3);
+  const formatted = rest ? rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + lastThree : lastThree;
+  return decPart !== undefined ? formatted + '.' + decPart : formatted;
+}
+
+// Strip commas and return number
+const unformat = v => parseFloat(String(v).replace(/,/g, '')) || 0;
+
+// Attach live formatter to amount inputs
+document.querySelectorAll('.amount-input').forEach(el => {
+  el.addEventListener('input', e => {
+    const input = e.target;
+    const cursorPos = input.selectionStart;
+    const oldLength = input.value.length;
+    // Keep only digits and decimal point
+    const cleaned = input.value.replace(/[^\d.]/g, '');
+    const formatted = formatIndian(cleaned);
+    input.value = formatted;
+    // Restore cursor position accounting for added/removed commas
+    const newLength = formatted.length;
+    const newPos = Math.max(0, cursorPos + (newLength - oldLength));
+    input.setSelectionRange(newPos, newPos);
+  });
+});
+
+function calc() {
+  const loan = unformat($('loanAmount').value);
+  const os = unformat($('outstandingAmount').value);
+  const pfPct = parseFloat($('pfPercent').value) || 0;
+  const insPrem = unformat($('insPremium').value);
+  const vas = parseFloat($('vasPlan').value) || 0;
+  const tenure = parseFloat($('tenure').value) || 0;
+  const irr = parseFloat($('irr').value) || 0;
+
+  const pfBase = loan * (pfPct / 100);
+  const pfInclGst = pfBase * (1 + GST_RATE);
+
+  $('pfInclGst').value = pfInclGst ? Math.round(pfInclGst).toLocaleString('en-IN') : '';
+
+  const doc = (loan > 0) ? DOC_CHARGE : 0;
+  const totalDed = os + pfInclGst + doc + insPrem + vas;
+  const net = loan - totalDed;
+
+  // EMI = P × r × (1+r)^n / ((1+r)^n − 1), r = monthly rate
+  let emi = 0;
+  if (loan > 0 && tenure > 0) {
+    if (irr > 0) {
+      const r = irr / 12 / 100;
+      const pow = Math.pow(1 + r, tenure);
+      emi = (loan * r * pow) / (pow - 1);
+    } else {
+      emi = loan / tenure;
+    }
+  }
+
+  $('s_loan').textContent = fmt(loan);
+  $('s_os').textContent = fmtNeg(os);
+  $('s_pf').textContent = fmtNeg(pfInclGst);
+  $('s_doc').textContent = fmtNeg(doc);
+  $('s_ins').textContent = fmtNeg(insPrem);
+  $('s_vas').textContent = fmtNeg(vas);
+  $('s_total_ded').textContent = fmtNeg(totalDed);
+  $('s_net').textContent = fmt(net);
+  $('s_emi').textContent = fmt(emi);
+
+  if (emi > 0) {
+    $('emi_meta').textContent = `${tenure} months @ ${irr}% p.a.`;
+  } else {
+    $('emi_meta').textContent = 'Enter loan, tenure & IRR';
+  }
+
+  const anyInput = loan || os || pfPct || insPrem || vas || tenure || irr;
+  $('s_sub').textContent = anyInput ? 'Updated just now' : 'Fill in the details to calculate';
+
+  $('warningBox').classList.toggle('show', net < 0);
+  $('s_net').classList.toggle('negative', net < 0);
+}
+
+document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calc));
+
+$('resetBtn').addEventListener('click', () => {
+  document.querySelectorAll('input:not([readonly]), select').forEach(el => { el.value = ''; });
+  calc();
+  toast('Form cleared');
+});
+
+function buildSummaryText() {
+  const loan = unformat($('loanAmount').value);
+  const os = unformat($('outstandingAmount').value);
+  const pfPct = $('pfPercent').value || '-';
+  const pfInclGstRaw = $('pfInclGst').value ? '₹' + $('pfInclGst').value : '₹0';
+  const insProv = $('insProvider').value || '-';
+  const insPrem = unformat($('insPremium').value);
+  const vasProv = $('vasProvider').value || '-';
+  const vasPlanOpt = $('vasPlan').selectedOptions[0]?.text || '-';
+  const vasPlanName = vasPlanOpt.includes('—') ? vasPlanOpt.split(' —')[0] : '-';
+  const tenure = $('tenure').value || '-';
+  const irr = $('irr').value || '-';
+  const vasAmt = parseFloat($('vasPlan').value) || 0;
+
+  return `Top-up Loan · Net Disbursal Summary
+------------------------------------
+Sanctioned Amount  : ${fmt(loan)}
+Tenure             : ${tenure} months
+IRR / ROI          : ${irr}%
+
+Outstanding Loan   : ${fmt(os)}
+Processing Fee     : ${pfInclGstRaw}  (${pfPct}% incl. 18% GST)
+Doc Charges        : ₹589
+Insurance          : ${fmt(insPrem)}  (${insProv})
+VAS Healthcare     : ${fmt(vasAmt)}  (${vasProv} · ${vasPlanName})
+------------------------------------
+Total Deductions   : ${$('s_total_ded').textContent}
+Net Disbursal      : ${$('s_net').textContent}
+Monthly EMI        : ${$('s_emi').textContent}`;
+}
+
+let toastTimer;
+function toast(msg) {
+  $('toastMsg').textContent = msg;
+  const t = $('toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// Clipboard with fallback for file:// and non-secure contexts
+async function copyToClipboard(text) {
+  // Modern API path
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) { /* fall through */ }
+  }
+  // Fallback: hidden textarea + execCommand
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.top = '0';
+  ta.style.left = '0';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, text.length);
+  let ok = false;
+  try {
+    ok = document.execCommand('copy');
+  } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
+
+$('copyBtn').addEventListener('click', async () => {
+  const ok = await copyToClipboard(buildSummaryText());
+  toast(ok ? 'Copied to clipboard ✓' : 'Copy failed — select manually');
+});
+
+$('shotBtn').addEventListener('click', async () => {
+  const card = $('summaryCard');
+  const canvas = await html2canvas(card, { backgroundColor: '#ffffff', scale: 2 });
+  const link = document.createElement('a');
+  link.download = 'net-disbursal-summary.png';
+  link.href = canvas.toDataURL();
+  link.click();
+  toast('Saved to your Downloads folder');
+});
+
+calc();
+</script>
+</body>
+</html>
