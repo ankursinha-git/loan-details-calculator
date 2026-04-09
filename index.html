@@ -243,6 +243,7 @@
 
   input[type="number"],
   input[type="text"],
+  input[type="date"],
   select {
     width: 100%;
     padding: 11px 14px;
@@ -255,6 +256,7 @@
     font-family: inherit;
     transition: border-color 0.15s, box-shadow 0.15s;
     -moz-appearance: textfield;
+    line-height: 1.5;
   }
   input[type="number"]::-webkit-outer-spin-button,
   input[type="number"]::-webkit-inner-spin-button {
@@ -274,7 +276,47 @@
     color: var(--text-muted);
     cursor: not-allowed;
   }
+  select:disabled {
+    background-color: #f9fafb;
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
   input::placeholder { color: #cbd5e1; font-weight: 400; }
+
+  /* Normalize HTML5 date input to match other fields exactly */
+  input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 44px;
+    color: var(--text);
+    text-transform: uppercase;
+  }
+  input[type="date"]:invalid,
+  input[type="date"]:not(:focus):not(:valid),
+  input[type="date"][value=""] { color: #cbd5e1; }
+  input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 20px;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.5;
+    margin-left: auto;
+    padding: 2px;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+  input[type="date"]::-webkit-datetime-edit { padding: 0; }
+
+  .ins-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  /* Field that spans the full width of the field-grid (used for calculated outputs) */
+  .field.field-full { grid-column: 1 / -1; }
 
   select {
     appearance: none;
@@ -701,13 +743,44 @@
             </div>
             <div class="field">
               <label>
-                Insurance Premium
-                <span class="info-tip" data-tip="You can get this amount directly from Jarvis">i</span>
+                Insurance Tenure
+                <span class="info-tip" data-tip="Available: 12, 18, 24, 36, 48 months (capped at loan tenure)">i</span>
+              </label>
+              <div class="input-wrap">
+                <select id="insTenure" disabled>
+                  <option value="">Enter loan tenure first</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>
+                Sum Assured
+                <span class="info-tip" data-tip="Auto-fills from sanctioned amount; you can override">i</span>
               </label>
               <div class="input-wrap has-prefix">
                 <span class="input-prefix">₹</span>
-                <input type="text" inputmode="numeric" id="insPremium" class="amount-input" placeholder="e.g. 5,000" />
+                <input type="text" inputmode="numeric" id="sumAssured" class="amount-input" placeholder="Auto from loan amount" />
               </div>
+            </div>
+            <div class="field">
+              <label>
+                Customer DOB
+                <span class="hint">(optional)</span>
+              </label>
+              <div class="input-wrap">
+                <input type="date" id="customerDob" />
+              </div>
+            </div>
+            <div class="field field-full">
+              <label>
+                Insurance Premium
+                <span class="hint">(incl. 18% GST · auto-calculated)</span>
+              </label>
+              <div class="input-wrap has-prefix">
+                <span class="input-prefix">₹</span>
+                <input type="text" id="insPremiumCalc" readonly placeholder="Enter sum assured & insurance tenure" />
+              </div>
+              <div class="ins-meta" id="insMeta">Select insurance tenure & sum assured to calculate</div>
             </div>
           </div>
         </div>
@@ -843,6 +916,24 @@
 const DOC_CHARGE = 589;
 const GST_RATE = 0.18;
 
+// =====================================================================
+// INSURANCE PREMIUM RATE TABLE (Group Credit Life)
+// Source: Acko_insurance_calculator.xlsx · finalized
+// Same rates apply to both Acko and ICICI Lombard
+// To update: edit values below — premium auto-recalculates everywhere
+// =====================================================================
+const INS_RATES = {
+  1: 0.0065,  // 1 year tenure → 0.65% of sum assured
+  2: 0.0095,  // 2 year tenure → 0.95% of sum assured
+  3: 0.0130,  // 3 year tenure → 1.30% of sum assured
+  4: 0.0179,  // 4 year tenure → 1.79% of sum assured
+  5: 0.0216   // 5 year tenure → 2.16% of sum assured
+};
+const MAX_INS_TENURE_YEARS = 5;
+const INS_TENURE_OPTIONS = [12, 18, 24, 36, 48];  // months — fixed selectable list
+let sumAssuredEdited = false;
+let lastInsTenureCap = -1;
+
 const fmt = n => {
   const v = Math.round(n);
   const sign = v < 0 ? '-' : '';
@@ -895,10 +986,65 @@ function calc() {
   const loan = unformat($('loanAmount').value);
   const os = unformat($('outstandingAmount').value);
   const pfPct = parseFloat($('pfPercent').value) || 0;
-  const insPrem = unformat($('insPremium').value);
   const vas = parseFloat($('vasPlan').value) || 0;
   const tenure = parseFloat($('tenure').value) || 0;
   const irr = parseFloat($('irr').value) || 0;
+
+  // Auto-fill Sum Assured from Sanctioned Loan unless user manually edited it
+  if (!sumAssuredEdited && loan > 0) {
+    $('sumAssured').value = formatIndian(String(loan));
+  } else if (!sumAssuredEdited && loan === 0) {
+    $('sumAssured').value = '';
+  }
+  const sumAssured = unformat($('sumAssured').value);
+
+  // Rebuild Insurance Tenure dropdown when loan tenure changes.
+  // Selectable values are fixed: 12, 18, 24, 36, 48 months.
+  // Filter to only options ≤ loan tenure.
+  const insCap = Math.max(0, Math.floor(tenure));
+  if (insCap !== lastInsTenureCap) {
+    lastInsTenureCap = insCap;
+    const sel = $('insTenure');
+    const prev = sel.value;
+    const validOptions = INS_TENURE_OPTIONS.filter(m => m <= insCap);
+    if (insCap < 1) {
+      sel.innerHTML = '<option value="">Enter loan tenure first</option>';
+      sel.disabled = true;
+    } else if (validOptions.length === 0) {
+      sel.innerHTML = '<option value="">Loan tenure must be ≥ 12 months</option>';
+      sel.disabled = true;
+    } else {
+      let html = '<option value="">Select tenure</option>';
+      validOptions.forEach(m => {
+        html += `<option value="${m}">${m} months</option>`;
+      });
+      sel.innerHTML = html;
+      sel.disabled = false;
+      // Restore previous selection if still in the new valid set
+      if (prev && validOptions.includes(parseInt(prev, 10))) sel.value = prev;
+    }
+  }
+
+  // Insurance Premium calculation
+  // User picks tenure in months. Rate table is annual, so we round UP to next full year
+  // for rate lookup (since insurance is typically charged in full-year blocks).
+  let insPrem = 0, insTenureMonths = parseInt($('insTenure').value, 10) || 0;
+  let insRate = 0, insRateYrs = 0;
+  if (sumAssured > 0 && insTenureMonths >= 1) {
+    insRateYrs = Math.min(Math.ceil(insTenureMonths / 12), MAX_INS_TENURE_YEARS);
+    insRate = INS_RATES[insRateYrs] || 0;
+    const base = sumAssured * insRate;
+    insPrem = base * (1 + GST_RATE);
+  }
+  $('insPremiumCalc').value = insPrem ? Math.round(insPrem).toLocaleString('en-IN') : '';
+  if (insPrem) {
+    const rateLabel = (insTenureMonths === insRateYrs * 12)
+      ? `${(insRate * 100).toFixed(2)}%`
+      : `${(insRate * 100).toFixed(2)}% (${insRateYrs} yr rate)`;
+    $('insMeta').textContent = `${insTenureMonths} mo · ${rateLabel} × 1.18 GST`;
+  } else {
+    $('insMeta').textContent = 'Select insurance tenure & sum assured to calculate';
+  }
 
   const pfBase = loan * (pfPct / 100);
   const pfInclGst = pfBase * (1 + GST_RATE);
@@ -937,17 +1083,22 @@ function calc() {
     $('emi_meta').textContent = 'Enter loan, tenure & IRR';
   }
 
-  const anyInput = loan || os || pfPct || insPrem || vas || tenure || irr;
+  const anyInput = loan || os || pfPct || sumAssured || vas || tenure || irr;
   $('s_sub').textContent = anyInput ? 'Updated just now' : 'Fill in the details to calculate';
 
   $('warningBox').classList.toggle('show', net < 0);
   $('s_net').classList.toggle('negative', net < 0);
 }
 
+// Track manual edits to Sum Assured so auto-fill from loan amount stops
+$('sumAssured').addEventListener('input', () => { sumAssuredEdited = true; });
+
 document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calc));
 
 $('resetBtn').addEventListener('click', () => {
   document.querySelectorAll('input:not([readonly]), select').forEach(el => { el.value = ''; });
+  sumAssuredEdited = false;
+  lastInsTenureCap = -1;
   calc();
   toast('Form cleared');
 });
@@ -958,7 +1109,8 @@ function buildSummaryText() {
   const pfPct = $('pfPercent').value || '-';
   const pfInclGstRaw = $('pfInclGst').value ? '₹' + $('pfInclGst').value : '₹0';
   const insProv = $('insProvider').value || '-';
-  const insPrem = unformat($('insPremium').value);
+  const sumAssured = unformat($('sumAssured').value);
+  const insPremRaw = $('insPremiumCalc').value ? '₹' + $('insPremiumCalc').value : '₹0';
   const vasProv = $('vasProvider').value || '-';
   const vasPlanOpt = $('vasPlan').selectedOptions[0]?.text || '-';
   const vasPlanName = vasPlanOpt.includes('—') ? vasPlanOpt.split(' —')[0] : '-';
@@ -975,7 +1127,8 @@ IRR / ROI          : ${irr}%
 Outstanding Loan   : ${fmt(os)}
 Processing Fee     : ${pfInclGstRaw}  (${pfPct}% incl. 18% GST)
 Doc Charges        : ₹589
-Insurance          : ${fmt(insPrem)}  (${insProv})
+Sum Assured        : ${fmt(sumAssured)}
+Insurance Premium  : ${insPremRaw}  (${insProv}, incl. 18% GST)
 VAS Healthcare     : ${fmt(vasAmt)}  (${vasProv} · ${vasPlanName})
 ------------------------------------
 Total Deductions   : ${$('s_total_ded').textContent}
