@@ -2,7 +2,7 @@
 
 An internal calculator for sales and business teams to quickly compute the **net disbursal amount** and **monthly EMI** of a top-up loan during live customer calls. Built to eliminate manual subtraction work and speed up the on-call pitch.
 
-**Live URL:** `https://<your-username>.github.io/<repo-name>/`
+**Live URL:** `[https://<your-username>.github.io/<repo-name>/](https://ankursinha-git.github.io/loan-details-calculator/)`
 
 ---
 
